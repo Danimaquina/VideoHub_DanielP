@@ -1,7 +1,27 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; // Importar el método de autenticación
+
+import { auth } from './firebaseConfig'; // Asegúrate de que la ruta sea correcta
 
 export default function Login({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    if (email && password) {
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          navigation.navigate('Favoritos');
+        })
+        .catch((error) => {
+          Alert.alert("Error", "Correo o contraseña incorrectos");
+        });
+    } else {
+      Alert.alert('Error', 'Por favor ingrese email y contraseña');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Logo */}
@@ -13,10 +33,23 @@ export default function Login({ navigation }) {
 
       {/* Formulario */}
       <View style={styles.formContainer}>
-        <TextInput placeholder="Email..." style={styles.input} />
-        <TextInput placeholder="Password..." secureTextEntry={true} style={styles.input} />
+        <TextInput
+          placeholder="Email..."
+          style={styles.input}
+          value={email}
+          onChangeText={(text) => setEmail(text)}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          placeholder="Password..."
+          secureTextEntry={true}
+          style={styles.input}
+          value={password}
+          onChangeText={(text) => setPassword(text)}
+        />
 
-        <TouchableOpacity style={styles.enterButton} onPress={() => navigation.navigate('Favoritos')}>
+        <TouchableOpacity style={styles.enterButton} onPress={handleLogin}>
           <Text style={styles.enterText}>Enter</Text>
         </TouchableOpacity>
       </View>

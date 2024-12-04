@@ -1,7 +1,28 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"; // Importar el método de registro
+
+import { auth } from './firebaseConfig'; // Asegúrate de que la ruta sea correcta
 
 export default function Register({ navigation }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleRegister = () => {
+    if (name && email && password) {
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          navigation.navigate('Favoritos');
+        })
+        .catch((error) => {
+          Alert.alert("Error", error.message);
+        });
+    } else {
+      Alert.alert('Error', 'Por favor ingrese todos los campos');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Logo */}
@@ -13,12 +34,30 @@ export default function Register({ navigation }) {
 
       {/* Formulario */}
       <View style={styles.formContainer}>
-        <TextInput placeholder="Name..." style={styles.input} />
-        <TextInput placeholder="Email..." style={styles.input} />
-        <TextInput placeholder="Password..." secureTextEntry={true} style={styles.input} />
+        <TextInput
+          placeholder="Name..."
+          style={styles.input}
+          value={name}
+          onChangeText={(text) => setName(text)}
+        />
+        <TextInput
+          placeholder="Email..."
+          style={styles.input}
+          value={email}
+          onChangeText={(text) => setEmail(text)}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          placeholder="Password..."
+          secureTextEntry={true}
+          style={styles.input}
+          value={password}
+          onChangeText={(text) => setPassword(text)}
+        />
 
-        <TouchableOpacity style={styles.enterButton} onPress={() => navigation.navigate('Favoritos')}>
-          <Text style={styles.enterText}>Enter</Text>
+        <TouchableOpacity style={styles.enterButton} onPress={handleRegister}>
+          <Text style={styles.enterText}>Register</Text>
         </TouchableOpacity>
       </View>
 
