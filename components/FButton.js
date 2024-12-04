@@ -9,13 +9,14 @@ export default function FButton({
     isSelected,
     onPress 
 }) {
+    const iconSize = 60; // Cambia este valor para ajustar el tamaño del icono
 
     return (
         <TouchableOpacity onPress={() => onPress(id)} style={styles.buttonContainer}>
             <View style={styles.iconContainer}>
                 <Icon
                     name={isSelected ? selectedIcon : unselectedIcon}
-                    size={50}
+                    size={iconSize} // Tamaño del ícono
                     style={styles.icon}
                 />
                 {isSelected && <View style={styles.selectedLine} />}
@@ -27,6 +28,7 @@ export default function FButton({
 const styles = StyleSheet.create({
     buttonContainer: {
         alignItems: 'center',
+        marginHorizontal: 10, // Espacio entre los botones
     },
     iconContainer: {
         alignItems: 'center',
@@ -35,9 +37,9 @@ const styles = StyleSheet.create({
         margin: 10,
     },
     selectedLine: {
-        height: 2,
+        height: 4, // Línea más gruesa para indicar selección
         backgroundColor: 'black',
-        width: 50, // Ajusta este valor para que coincida con el tamaño del icono o lo que necesites
+        width: 60, // Ajusta al tamaño del ícono
         marginTop: 5,
     },
 });
