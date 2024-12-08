@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput, Alert} from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import YoutubeIframe from "react-native-youtube-iframe";
 
-const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
+const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
   const [thumbnail, setThumbnail] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [title, setTitle] = useState(initialTitle);
@@ -13,7 +13,6 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
     setIsWatched(prevState => !prevState); // Alternar el estado de visto
   };
 
-  // Mejorar la expresión regular para obtener el ID de YouTube
   const getVideoId = (url) => {
     const regExp =
       /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|\?v=|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -21,7 +20,6 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
     return match ? match[1] : null;
   };
 
-  // Descargar la miniatura del video
   const fetchThumbnail = (videoId) => {
     if (videoId) {
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
@@ -32,13 +30,11 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
     }
   };
 
-  // Obtener la miniatura al cargar el componente o cambiar la URL
   useEffect(() => {
     const videoId = getVideoId(videoUrl);
     fetchThumbnail(videoId);
   }, [videoUrl]);
 
-  // Manejar estado del video
   const handleStateChange = useCallback((state) => {
     if (state === "ended") {
       setIsPlaying(false);
@@ -48,7 +44,6 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
 
   return (
     <View style={styles.cellContainer}>
-      {/* Portada del video */}
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error: URL no válida</Text>
@@ -63,7 +58,6 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
         </TouchableOpacity>
       )}
 
-      {/* Detalles */}
       <View style={styles.detailsContainer}>
         <TextInput
           style={styles.titleInput}
@@ -71,18 +65,18 @@ const YouTubeCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
           value={title}
           onChangeText={(text) => setTitle(text)}
         />
-        <Text style={styles.dateText}>Fecha de adición: {addedDate}</Text>
 
-        {/* Botón "Visto" */}
         <TouchableOpacity
           style={[styles.watchedButton, isWatched && styles.watchedActive]}
-          onPress={toggleWatched}
+          onPress={() => {
+            toggleWatched();
+            onToggleWatched();
+          }}
         >
           <Text style={styles.watchedButtonText}>{isWatched ? 'Visto' : 'Marcar como Visto'}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal para reproducir el video */}
       <Modal visible={isPlaying} transparent={true} animationType="slide">
         <View style={styles.modalBackground}>
           <YoutubeIframe
@@ -135,10 +129,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
     borderRadius: 4,
   },
-  dateText: {
-    fontSize: 14,
-    color: "#555",
-  },
   modalBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.8)",
@@ -167,7 +157,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   watchedButton: {
-    backgroundColor: '#00910E', // Color de fondo
+    backgroundColor: '#00910E',
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -175,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   watchedActive: {
-    backgroundColor: '#ff3b30', // Color cuando está marcado como visto
+    backgroundColor: '#ff3b30',
   },
   watchedButtonText: {
     color: '#fff',

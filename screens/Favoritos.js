@@ -1,20 +1,57 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import FSection from '../components/FSection';
-import LogoutPopup from '../components/PopUp'; // Asegúrate de importar el componente de popup
+import LogoutPopup from '../components/PopUp';
 import YouTubeCell from "../components/YouTubeCell";
 import InstagramCell from "../components/InstagramCell";
+import { getAuth } from 'firebase/auth'; 
+import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'; 
 
 export default function Favoritos({ navigation }) {
   const [isPopupVisible, setPopupVisible] = useState(false);
-  const [filter, setFilter] = useState("todos"); // Estado para el filtro
+  const [filter, setFilter] = useState("todos");
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Ejemplo de videos con el estado de "visto"
-  const videos = [
-    { id: 1, platform: 'youtube', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', addedDate: '04/12/2024', title: 'Tutorial increíble', isWatched: true },
-    { id: 2, platform: 'instagram', videoUrl: 'https://www.instagram.com/reel/Cxi3UUZoJJ_/', addedDate: '03/12/2024', title: 'Mi video de Instagram', isWatched: false },
-    { id: 3, platform: 'instagram', videoUrl: 'https://www.instagram.com/reel/Cxi3UUZoJJ_/', addedDate: '03/12/2024', title: 'Mi video de Instagram', isWatched: false },
-  ];
+  const db = getFirestore();
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+
+    const videosRef = collection(db, 'videos');
+    const q = query(videosRef, where('usuario', '==', user.uid)); 
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const videosData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setVideos(videosData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const toggleWatchedInFirestore = async (videoId, isWatched) => {
+    try {
+      const videoDoc = doc(db, 'videos', videoId);
+      await updateDoc(videoDoc, { visto: !isWatched });
+    } catch (error) {
+      console.error("Error actualizando el estado:", error);
+    }
+  };
+
+  const filteredVideos = videos.filter((video) => {
+    if (filter === "vistos") return video.visto;
+    if (filter === "noVistos") return !video.visto;
+    return true;
+  });
 
   const handlePress = (id) => {
     if (id === 1) {
@@ -27,25 +64,25 @@ export default function Favoritos({ navigation }) {
       navigation.navigate('Listas');
     }
     if (id === 4) {
-      setPopupVisible(true); // Muestra el popup si se presiona el botón con id 4
+      setPopupVisible(true);
     }
   };
 
-  // Filtrar los videos según el estado de "visto"
-  const filteredVideos = videos.filter((video) => {
-    if (filter === "vistos") return video.isWatched;
-    if (filter === "noVistos") return !video.isWatched;
-    return true; // Mostrar todos los videos
-  });
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#ffffff" />
+        <Text style={styles.loaderText}>Cargando favoritos...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Título fijo */}
       <View style={styles.header}>
         <Text style={styles.title}>Favoritos</Text>
       </View>
 
-      {/* Filtro de videos */}
       <View style={styles.filterButtons}>
         <TouchableOpacity onPress={() => setFilter("vistos")} style={styles.filterButton}>
           <Text style={styles.filterButtonText}>Vistos</Text>
@@ -58,29 +95,38 @@ export default function Favoritos({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Scroll para las celdas de videos filtrados */}
       <ScrollView style={styles.scrollView}>
         {filteredVideos.map((video) => (
-          video.platform === 'youtube' ? (
-            <YouTubeCell key={video.id} videoUrl={video.videoUrl} addedDate={video.addedDate} initialTitle={video.title} />
+          video.tipo === 'YouTube' ? (
+            <YouTubeCell
+              key={video.id}
+              videoUrl={video.enlace} 
+              initialTitle={video.titulo} 
+              isWatched={video.visto} 
+              onToggleWatched={() => toggleWatchedInFirestore(video.id, video.visto)} 
+            />
           ) : (
-            <InstagramCell key={video.id} videoUrl={video.videoUrl} addedDate={video.addedDate} initialTitle={video.title} />
+            <InstagramCell
+              key={video.id}
+              videoUrl={video.enlace} 
+              initialTitle={video.titulo} 
+              isWatched={video.visto} 
+              onToggleWatched={() => toggleWatchedInFirestore(video.id, video.visto)} 
+            />
           )
         ))}
       </ScrollView>
 
-      {/* Footer con botones estáticos */}
       <View style={styles.footer}>
         <FSection currentSection={1} onPress={handlePress} />
       </View>
 
-      {/* Popup de Logout */}
       <LogoutPopup
         visible={isPopupVisible}
-        onClose={() => setPopupVisible(false)} // Cierra el popup cuando se presiona "No"
+        onClose={() => setPopupVisible(false)}
         onConfirm={() => {
-          setPopupVisible(false); // Cierra el popup
-          navigation.navigate('Login'); // Navega a la pantalla Login
+          setPopupVisible(false);
+          navigation.navigate('Login');
         }}
         navigation={navigation}
       />
@@ -90,32 +136,22 @@ export default function Favoritos({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#00910E' },
-
-  // Estilo para el header (título fijo)
   header: {
-    position: 'absolute', // Hace que el título sea fijo en la parte superior
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 80, // Ajusta el tamaño del header
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00910E', // Mantén el fondo consistente
-    zIndex: 10, // Para asegurarse de que el header esté sobre el contenido
+    backgroundColor: '#00910E',
+    zIndex: 10,
   },
-
-  // Estilo del título
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-
-  // Estilo de los botones de filtro
+  title: { fontSize: 30, fontWeight: 'bold', color: 'white' },
   filterButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 100, // Espacio para que no quede pegado al header
+    marginTop: 100,
   },
   filterButton: {
     backgroundColor: '#ff3b30',
@@ -123,24 +159,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  filterButtonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-
-  // Scroll de las celdas de video
+  filterButtonText: { color: 'white', fontSize: 16 },
   scrollView: {
-    marginTop: 25, // Deja espacio para el header fijo y los botones de filtro
+    marginTop: 25,
     flex: 1,
-    paddingBottom: 90, // Aumentamos el paddingBottom para dejar espacio para el footer
+    paddingBottom: 90,
   },
-
-  // Footer para los botones
   footer: {
-    backgroundColor: '#00910E', // Color de fondo para el footer
-    position: 'absolute', // Asegura que el footer quede fijo en la parte inferior
+    backgroundColor: '#00910E',
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#00910E',
+  },
+  loaderText: { color: 'white', fontSize: 16, marginTop: 10 },
 });

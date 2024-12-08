@@ -2,32 +2,28 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput } from "react-native";
 import * as WebBrowser from 'expo-web-browser'; // Usamos expo-web-browser
 
-const InstagramCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
+const InstagramCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [title, setTitle] = useState(initialTitle);
   const [error, setError] = useState(false);
   const [isWatched, setIsWatched] = useState(false); // Estado para marcar como visto
 
-
   const toggleWatched = () => {
     setIsWatched(prevState => !prevState); // Alternar el estado de visto
   };
 
-  // Validar que el enlace de Instagram sea válido
   const isValidInstagramUrl = (url) => {
     const regExp = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reel|p|tv)\/([a-zA-Z0-9_-]{11})/;
     return regExp.test(url);
   };
 
-  // Normalizar la URL para asegurar que sea una URL web válida
   const normalizeUrl = (url) => {
     if (url.includes("instagram://") || url.includes("iglite://")) {
       return url.replace(/^(instagram:\/\/|iglite:\/\/)/, "https://www.instagram.com/");
     }
-    return url; // Si ya está en el formato correcto, la retornamos tal cual
+    return url;
   };
 
-  // Validar y establecer el video URL
   const fetchVideoUrl = (url) => {
     if (isValidInstagramUrl(url)) {
       setError(false);
@@ -36,7 +32,6 @@ const InstagramCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
     }
   };
 
-  // Llamar a la validación al cargar el componente
   useEffect(() => {
     fetchVideoUrl(videoUrl);
   }, [videoUrl]);
@@ -48,7 +43,6 @@ const InstagramCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
 
   return (
     <View style={styles.cellContainer}>
-      {/* Mostrar miniatura o mensaje de error */}
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error: URL no válida</Text>
@@ -63,7 +57,6 @@ const InstagramCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
         </TouchableOpacity>
       )}
 
-      {/* Detalles */}
       <View style={styles.detailsContainer}>
         <TextInput
           style={styles.titleInput}
@@ -71,31 +64,28 @@ const InstagramCell = ({ videoUrl, addedDate, initialTitle = "" }) => {
           value={title}
           onChangeText={(text) => setTitle(text)}
         />
-        <Text style={styles.dateText}>Fecha de adición: {addedDate}</Text>
 
-        {/* Botón "Visto" */}
         <TouchableOpacity
           style={[styles.watchedButton, isWatched && styles.watchedActive]}
-          onPress={toggleWatched}
+          onPress={() => {
+            toggleWatched();
+            onToggleWatched();
+          }}
         >
           <Text style={styles.watchedButtonText}>{isWatched ? 'Visto' : 'Marcar como Visto'}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal para mostrar el video */}
       <Modal visible={isVideoVisible} transparent={true} animationType="slide">
         <View style={styles.modalBackground}>
-          <TouchableOpacity
-            style={styles.openVideoButton}
-            onPress={openVideoInBrowser}
-          >
-            <Text style={styles.openVideoText}>Abrir Video</Text>
-          </TouchableOpacity>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setIsVideoVisible(false)}
           >
             <Text style={styles.closeButtonText}>Cerrar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openVideoInBrowser}>
+            <Text style={styles.openInBrowserText}>Abrir en navegador</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -133,25 +123,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
     borderRadius: 4,
   },
-  dateText: {
-    fontSize: 14,
-    color: "#555",
-  },
   modalBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  openVideoButton: {
-    backgroundColor: "#ff3b30",
-    padding: 10,
-    marginTop: 20,
-    borderRadius: 5,
-  },
-  openVideoText: {
-    color: "#fff",
-    fontSize: 16,
   },
   closeButton: {
     backgroundColor: "#ff3b30",
@@ -162,6 +138,11 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  openInBrowserText: {
+    color: "#fff",
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
   errorContainer: {
     height: 200,
@@ -175,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   watchedButton: {
-    backgroundColor: '#00910E', // Color de fondo
+    backgroundColor: '#00910E',
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
@@ -183,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   watchedActive: {
-    backgroundColor: '#ff3b30', // Color cuando está marcado como visto
+    backgroundColor: '#ff3b30',
   },
   watchedButtonText: {
     color: '#fff',
