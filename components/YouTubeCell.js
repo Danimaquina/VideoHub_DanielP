@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import YoutubeIframe from "react-native-youtube-iframe";
-import moment from 'moment';  // Importa moment para formatear la fecha
+import moment from 'moment';  
 
 const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched, fechaCreacion }) => {
   const [thumbnail, setThumbnail] = useState(null);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; // Importar el método de registro y actualización de perfil
 
-import { auth } from './firebaseConfig'; // Asegúrate de que la ruta sea correcta
+import { auth } from './firebaseConfig'; 
 
 export default function Register({ navigation }) {
   const [name, setName] = useState('');

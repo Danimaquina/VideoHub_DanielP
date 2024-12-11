@@ -3,14 +3,12 @@ import { View, Text, StyleSheet, TextInput, Button, Alert, FlatList } from 'reac
 import { useNavigation } from '@react-navigation/native';
 import FSection from '../components/FSection';
 import LogoutPopup from '../components/PopUp';
-import { db, auth } from './firebaseConfig'; // Importa Firestore y Auth desde tu configuración
+import { db, auth } from './firebaseConfig'; // Importa Firestore y Auth 
 import { collection, addDoc, serverTimestamp, writeBatch, doc, arrayUnion, getDocs } from 'firebase/firestore'; // Métodos de Firestore
 import { getAuth } from 'firebase/auth'; // Firebase Authentication
 import { CheckBox } from 'react-native-elements'; // Utilizamos CheckBox de react-native-elements
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['Support for defaultProps will be removed']);
-
-
 
 export default function SubirVideo() {
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -23,9 +21,17 @@ export default function SubirVideo() {
   // Obtener las listas desde Firestore al cargar el componente
   const fetchListas = async () => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        return; // Si no hay usuario, no se puede obtener las listas
+      }
+
       const listasCollection = collection(db, 'listas');
       const listasSnapshot = await getDocs(listasCollection);
-      const listasData = listasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const listasData = listasSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(list => list.userId === user.uid); // Filtra las listas creadas por el usuario actual
+
       setListas(listasData);
     } catch (error) {
       console.error("Error fetching listas:", error);
@@ -202,8 +208,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   checkbox: {
-    backgroundColor: 'white', // Transparente para que el checkbox no tenga fondo
-    borderWidth: 0, // Sin borde
+    backgroundColor: 'white', 
+    borderWidth: 0, 
   },
   footer: { flex: 1 },
 });

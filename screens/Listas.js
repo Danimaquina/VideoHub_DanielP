@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';  
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, Button, ScrollView } from 'react-native';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore'; 
+import { getFirestore, collection, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
 import FSection from '../components/FSection';  
 import LogoutPopup from '../components/PopUp';
 import YouTubeCell from "../components/YouTubeCell";  
 import InstagramCell from "../components/InstagramCell";  
 import { getAuth } from 'firebase/auth';  
-import moment from 'moment'; // Asegúrate de importar moment
+import moment from 'moment'; // Para representar la data
 
 export default function Listas({ navigation }) {
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -34,6 +34,7 @@ export default function Listas({ navigation }) {
     }
   };
 
+  // Fetch lists for the authenticated user
   useEffect(() => {
     if (!user) {
       navigation.navigate('Login');
@@ -46,12 +47,17 @@ export default function Listas({ navigation }) {
       const listasData = await Promise.all(
         listasSnapshot.docs.map(async (doc) => {
           const list = { id: doc.id, ...doc.data() };
-          // Obtenemos la cantidad de videos en el campo 'contenido'
-          const videoCount = list.contenido ? list.contenido.length : 0;
-          return { ...list, videoCount }; // Añadimos el número de videos
+          // Verificar que la lista pertenece al usuario autenticado
+          if (list.userId === user.uid) {
+            // Obtenemos la cantidad de videos en el campo 'contenido'
+            const videoCount = list.contenido ? list.contenido.length : 0;
+            return { ...list, videoCount }; // Añadimos el número de videos
+          }
+          return null; // No incluir listas de otros usuarios
         })
       );
-      setListas(listasData);
+      // Filtrar listas nulas (listas que no pertenecen al usuario actual)
+      setListas(listasData.filter(list => list !== null));
     };
 
     fetchListas();  
@@ -87,13 +93,21 @@ export default function Listas({ navigation }) {
       return;
     }
 
-    await addDoc(collection(db, 'listas'), { title: newListTitle, contenido: [] });
+    // Agregar la lista con el UID del usuario
+    await addDoc(collection(db, 'listas'), {
+      title: newListTitle,
+      contenido: [],
+      userId: user.uid,  // Agregar el ID del usuario que creó la lista
+    });
+    
     setNewListTitle('');
     setCreatingList(false);
-
+  
+    // Refrescar las listas después de crear una nueva
     const listasSnapshot = await getDocs(collection(db, 'listas'));
     const listasData = listasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setListas(listasData);
+    // Filtrar las listas solo para mostrar las del usuario actual
+    setListas(listasData.filter(list => list.userId === user.uid));
   };
 
   return (

@@ -9,69 +9,75 @@ import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } fr
 
 export default function Favoritos({ navigation }) {
   const [isPopupVisible, setPopupVisible] = useState(false);
-  const [filter, setFilter] = useState("todos");
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("todos"); // Estado para almacenar el filtro de los videos
+  const [videos, setVideos] = useState([]); // Estado para almacenar los videos del usuario
+  const [loading, setLoading] = useState(true); // Estado para mostrar la carga mientras se obtienen los videos
 
-  const db = getFirestore();
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const db = getFirestore(); // Inicializa Firestore
+  const auth = getAuth(); // Obtiene la instancia de autenticación
+  const user = auth.currentUser; // Obtiene el usuario actual autenticado
 
+  // useEffect se ejecuta al montar el componente y al cambiar el usuario
   useEffect(() => {
     if (!user) {
-      navigation.navigate('Login');
+      navigation.navigate('Login'); // Si no hay usuario autenticado, navega al login
       return;
     }
 
-    const videosRef = collection(db, 'videos');
-    const q = query(videosRef, where('usuario', '==', user.uid)); 
+    const videosRef = collection(db, 'videos'); // Referencia a la colección de videos en Firestore
+    const q = query(videosRef, where('usuario', '==', user.uid)); // Filtra los videos del usuario actual
 
+    // Escucha los cambios en los videos y actualiza el estado
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const videosData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      setVideos(videosData);
-      setLoading(false);
+      setVideos(videosData); // Actualiza la lista de videos
+      setLoading(false); // Termina la carga
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Limpia el listener al desmontar el componente
   }, [user]);
 
+  // Función para actualizar el estado de "visto" del video en Firestore
   const toggleWatchedInFirestore = async (videoId, isWatched) => {
     try {
-      const videoDoc = doc(db, 'videos', videoId);
-      await updateDoc(videoDoc, { visto: !isWatched });
+      const videoDoc = doc(db, 'videos', videoId); // Referencia al documento del video
+      await updateDoc(videoDoc, { visto: !isWatched }); // Actualiza el campo "visto" en Firestore
     } catch (error) {
-      console.error("Error actualizando el estado:", error);
+      console.error("Error actualizando el estado:", error); // Manejo de errores
     }
   };
 
+  // Filtra los videos según el filtro seleccionado (vistos, no vistos, o todos)
   const filteredVideos = videos.filter((video) => {
     if (filter === "vistos") return video.visto;
     if (filter === "noVistos") return !video.visto;
-    return true;
+    return true; // Devuelve todos los videos si el filtro es "todos"
   });
 
+  // Función para manejar la navegación entre secciones
   const handlePress = (id) => {
     if (id === 1) {
-      navigation.navigate('Favoritos');
+      navigation.navigate('Favoritos'); // Navega a la sección de favoritos
     }
     if (id === 2) {
-      navigation.navigate('SubirVideo');
+      navigation.navigate('SubirVideo'); // Navega a la sección de subir video
     }
     if (id === 3) {
-      navigation.navigate('Listas');
+      navigation.navigate('Listas'); // Navega a la sección de listas
     }
     if (id === 4) {
-      setPopupVisible(true);
+      setPopupVisible(true); // Muestra el popup de logout
     }
   };
 
+  // Si los datos están cargando, muestra el indicador de carga
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#ffffff" />
+        <ActivityIndicator size="large" color="#ffffff" /> {/* Indicador de carga */}
         <Text style={styles.loaderText}>Cargando favoritos...</Text>
       </View>
     );
@@ -84,6 +90,7 @@ export default function Favoritos({ navigation }) {
       </View>
 
       <View style={styles.filterButtons}>
+        {/* Botones de filtro para los videos */}
         <TouchableOpacity onPress={() => setFilter("vistos")} style={styles.filterButton}>
           <Text style={styles.filterButtonText}>Vistos</Text>
         </TouchableOpacity>
@@ -96,6 +103,7 @@ export default function Favoritos({ navigation }) {
       </View>
 
       <ScrollView style={styles.scrollView}>
+        {/* Muestra las celdas de los videos filtrados */}
         {filteredVideos.map((video) => (
           video.tipo === 'YouTube' ? (
             <YouTubeCell
@@ -120,7 +128,7 @@ export default function Favoritos({ navigation }) {
 
         {/* Celda de "No hay más videos" al final */}
         <View style={styles.noMoreVideosCell}>
-          <Text style={styles.noMoreVideosText}>No hay más videos</Text>
+          <Text style={styles.noMoreVideosText}>No hay videos</Text>
         </View>
       </ScrollView>
 
@@ -128,12 +136,13 @@ export default function Favoritos({ navigation }) {
         <FSection currentSection={1} onPress={handlePress} />
       </View>
 
+      {/* Popup de logout */}
       <LogoutPopup
         visible={isPopupVisible}
         onClose={() => setPopupVisible(false)}
         onConfirm={() => {
           setPopupVisible(false);
-          navigation.navigate('Login');
+          navigation.navigate('Login'); // Redirige a login al confirmar
         }}
         navigation={navigation}
       />
@@ -161,12 +170,12 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   filterButton: {
-    backgroundColor: '#ff3b30',
+    backgroundColor: 'white',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  filterButtonText: { color: 'white', fontSize: 16 },
+  filterButtonText: { color: 'black', fontSize: 16 },
   scrollView: {
     marginTop: 25,
     flex: 1,
@@ -186,7 +195,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#00910E',
   },
   loaderText: { color: 'white', fontSize: 16, marginTop: 10 },
-  // Estilos para la celda "No hay más videos"
   noMoreVideosCell: {
     backgroundColor: 'white',
     padding: 100,
