@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';  
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, Button, ScrollView } from 'react-native';
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore'; 
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore'; 
 import FSection from '../components/FSection';  
+import LogoutPopup from '../components/PopUp';
 import YouTubeCell from "../components/YouTubeCell";  
 import InstagramCell from "../components/InstagramCell";  
 import { getAuth } from 'firebase/auth';  
+import moment from 'moment'; // Asegúrate de importar moment
 
 export default function Listas({ navigation }) {
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -41,7 +43,14 @@ export default function Listas({ navigation }) {
     const fetchListas = async () => {
       const listasCollection = collection(db, 'listas');
       const listasSnapshot = await getDocs(listasCollection);
-      const listasData = listasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const listasData = await Promise.all(
+        listasSnapshot.docs.map(async (doc) => {
+          const list = { id: doc.id, ...doc.data() };
+          // Obtenemos la cantidad de videos en el campo 'contenido'
+          const videoCount = list.contenido ? list.contenido.length : 0;
+          return { ...list, videoCount }; // Añadimos el número de videos
+        })
+      );
       setListas(listasData);
     };
 
@@ -62,7 +71,14 @@ export default function Listas({ navigation }) {
       })
     );
 
-    setSelectedListVideos(videosData);  
+    // Ordenar los videos según la fecha de creación (más reciente primero)
+    const sortedVideos = videosData.sort((a, b) => {
+      const dateA = moment(a.fechaCreacion?.toDate());
+      const dateB = moment(b.fechaCreacion?.toDate());
+      return dateB - dateA; // Ordena en orden descendente
+    });
+
+    setSelectedListVideos(sortedVideos);  
   };
 
   const handleCreateList = async () => {
@@ -71,13 +87,10 @@ export default function Listas({ navigation }) {
       return;
     }
 
-  
-    // Crear nueva lista
     await addDoc(collection(db, 'listas'), { title: newListTitle, contenido: [] });
     setNewListTitle('');
     setCreatingList(false);
 
-    // Recargar las listas
     const listasSnapshot = await getDocs(collection(db, 'listas'));
     const listasData = listasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setListas(listasData);
@@ -85,6 +98,8 @@ export default function Listas({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.screenTitle}>Mis Listas</Text>
+
       <TouchableOpacity
         style={styles.createListButton}
         onPress={() => setCreatingList(true)}
@@ -99,7 +114,12 @@ export default function Listas({ navigation }) {
             style={styles.listItem}
             onPress={() => fetchVideosForList(item.id)}
           >
-            <Text style={styles.listTitle}>{item.title || 'Sin título'}</Text>
+            <Text style={styles.listTitle}>
+              {item.title || 'Sin título'}
+            </Text>
+            <Text style={styles.videoCountText}>
+              {item.videoCount} {item.videoCount === 1 ? 'video' : 'videos'}
+            </Text>
           </TouchableOpacity>
         )}
         keyExtractor={(item) => item.id}
@@ -145,7 +165,7 @@ export default function Listas({ navigation }) {
               if (video.tipo === 'YouTube') {
                 return (
                   <YouTubeCell
-                    key={video.id}
+                    key={video.titulo} // Usa 'titulo' como clave
                     videoUrl={video.enlace}
                     initialTitle={video.titulo}
                     isWatched={video.visto}
@@ -155,7 +175,7 @@ export default function Listas({ navigation }) {
               } else if (video.tipo === 'Instagram') {
                 return (
                   <InstagramCell
-                    key={video.id}
+                    key={video.titulo} // Usa 'titulo' como clave
                     videoUrl={video.enlace}
                     initialTitle={video.titulo}
                     isWatched={video.visto}
@@ -170,13 +190,26 @@ export default function Listas({ navigation }) {
         </View>
       </Modal>
 
-      <FSection currentSection={3} onPress={handlePress} />
+      {/* Footer */}
+      <View style={styles.footer}>
+        <FSection currentSection={3} onPress={handlePress} />
+      </View>
+      <LogoutPopup
+        visible={isPopupVisible}
+        onClose={() => setPopupVisible(false)}
+        onConfirm={() => {
+          setPopupVisible(false);
+          navigation.navigate('Login');
+        }}
+        navigation={navigation}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#00910E' },
+  container: { flex: 1, backgroundColor: '#00910E', paddingBottom: 60 },
+  screenTitle: { fontSize: 29, fontWeight: 'bold', color: '#fff', textAlign: 'center', marginVertical: 20 },
   createListButton: {
     backgroundColor: '#4CAF50',
     padding: 15,
@@ -187,8 +220,9 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   createListText: { color: '#fff', fontSize: 18 },
-  listItem: { backgroundColor: '#fff', padding: 15, marginVertical: 10, borderRadius: 5, width: '100%', maxWidth: 400 },
+  listItem: { backgroundColor: '#fff', padding: 15, marginVertical: 10, borderRadius: 5, width: '100%', maxWidth: 400, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   listTitle: { fontSize: 18, fontWeight: 'bold' },
+  videoCountText: { fontSize: 14, color: '#666' },
   emptyListText: { color: '#fff', fontSize: 20, textAlign: 'center' },
   modalBackground: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
   createListModal: { backgroundColor: '#fff', padding: 20, borderRadius: 10, width: '80%' },
@@ -196,4 +230,5 @@ const styles = StyleSheet.create({
   closeButton: { backgroundColor: '#ff3b30', padding: 10, borderRadius: 5, marginTop: 20 },
   closeButtonText: { color: '#fff', fontSize: 16 },
   scrollView: { marginTop: 20, paddingHorizontal: 10 },
+  footer: { position: 'absolute', bottom: 0, width: '100%' },
 });

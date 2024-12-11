@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput } from "react-native";
 import * as WebBrowser from 'expo-web-browser'; // Usamos expo-web-browser
+import moment from 'moment';  // Importamos moment.js para manejar y formatear fechas
 
-const InstagramCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
+const InstagramCell = ({ videoUrl, initialTitle = "", onToggleWatched, fechaCreacion }) => {
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [title, setTitle] = useState(initialTitle);
   const [error, setError] = useState(false);
@@ -41,6 +42,9 @@ const InstagramCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
     setIsVideoVisible(false);
   };
 
+  // Formatear la fecha de creación
+  const formattedDate = moment(fechaCreacion?.toDate()).format('DD/MM/YYYY');  // Asegúrate de convertir a un formato legible
+
   return (
     <View style={styles.cellContainer}>
       {error ? (
@@ -64,6 +68,10 @@ const InstagramCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
           value={title}
           onChangeText={(text) => setTitle(text)}
         />
+
+        {/* Mostrar la fecha de creación */}
+        <Text style={styles.dateText}>Fecha de creación: {formattedDate}</Text>
+        
 
         <TouchableOpacity
           style={[styles.watchedButton, isWatched && styles.watchedActive]}
@@ -122,6 +130,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: "#f9f9f9",
     borderRadius: 4,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 5,
   },
   modalBackground: {
     flex: 1,

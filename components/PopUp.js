@@ -1,7 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { getAuth } from 'firebase/auth';
 
 export default function PopUp({ visible, onClose, onConfirm, navigation }) {
+  const [userName, setUserName] = useState(null);  // Estado para guardar el nombre del usuario
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    // Verifica si el usuario ya está disponible y establece su nombre
+    if (user) {
+      setUserName(user.displayName || 'Usuario');
+    } else {
+      setUserName('Usuario');
+    }
+  }, []);  // Solo se ejecuta una vez al montar el componente
+
+  // Muestra un mensaje de carga si el nombre no está disponible aún
+  if (userName === null) {
+    return (
+      <Modal
+        transparent={true}
+        visible={visible}
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.popupContainer}>
+            <Text style={styles.title}>Cargando...</Text>
+            <Text style={styles.message}>Por favor, espera...</Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       transparent={true}
@@ -11,8 +45,8 @@ export default function PopUp({ visible, onClose, onConfirm, navigation }) {
     >
       <View style={styles.overlay}>
         <View style={styles.popupContainer}>
-          <Text style={styles.title}>Log out</Text>
-          <Text style={styles.message}>¿Estás seguro de que deseas salir?</Text>
+          <Text style={styles.title}>Cerrar sesión</Text>
+          <Text style={styles.message}>¿Estás seguro de que deseas salir, {userName}?</Text>
 
           <View style={styles.buttonsContainer}>
             <TouchableOpacity
@@ -86,8 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#00910E',
     borderWidth: 1,
-    backgroundColor: '#00910E'
-
+    backgroundColor: '#00910E',
   },
   buttonText: {
     fontSize: 18,

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import YoutubeIframe from "react-native-youtube-iframe";
+import moment from 'moment';  // Importa moment para formatear la fecha
 
-const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
+const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched, fechaCreacion }) => {
   const [thumbnail, setThumbnail] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [title, setTitle] = useState(initialTitle);
@@ -22,7 +23,7 @@ const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
 
   const fetchThumbnail = (videoId) => {
     if (videoId) {
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg;`
       setThumbnail(thumbnailUrl);
       setError(false);
     } else {
@@ -41,6 +42,9 @@ const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
       Alert.alert("El video ha terminado");
     }
   }, []);
+
+  // Formatear la fecha de creación
+  const formattedDate = moment(fechaCreacion?.toDate()).format('DD/MM/YYYY');  // Asegúrate de convertir a un formato legible
 
   return (
     <View style={styles.cellContainer}>
@@ -65,6 +69,9 @@ const YouTubeCell = ({ videoUrl, initialTitle = "", onToggleWatched }) => {
           value={title}
           onChangeText={(text) => setTitle(text)}
         />
+
+        {/* Mostrar la fecha de creación */}
+        <Text style={styles.dateText}>Fecha de creación: {formattedDate}</Text>
 
         <TouchableOpacity
           style={[styles.watchedButton, isWatched && styles.watchedActive]}
@@ -128,6 +135,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: "#f9f9f9",
     borderRadius: 4,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 5,
   },
   modalBackground: {
     flex: 1,

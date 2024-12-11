@@ -7,6 +7,10 @@ import { db, auth } from './firebaseConfig'; // Importa Firestore y Auth desde t
 import { collection, addDoc, serverTimestamp, writeBatch, doc, arrayUnion, getDocs } from 'firebase/firestore'; // Métodos de Firestore
 import { getAuth } from 'firebase/auth'; // Firebase Authentication
 import { CheckBox } from 'react-native-elements'; // Utilizamos CheckBox de react-native-elements
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Support for defaultProps will be removed']);
+
+
 
 export default function SubirVideo() {
   const [isPopupVisible, setPopupVisible] = useState(false);
@@ -198,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   checkbox: {
-    backgroundColor: 'transparent', // Transparente para que el checkbox no tenga fondo
+    backgroundColor: 'white', // Transparente para que el checkbox no tenga fondo
     borderWidth: 0, // Sin borde
   },
   footer: { flex: 1 },

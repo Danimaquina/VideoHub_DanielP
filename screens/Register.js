@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"; // Importar el método de registro
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"; // Importar el método de registro y actualización de perfil
 
 import { auth } from './firebaseConfig'; // Asegúrate de que la ruta sea correcta
 
@@ -12,8 +12,16 @@ export default function Register({ navigation }) {
   const handleRegister = () => {
     if (name && email && password) {
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          navigation.navigate('Favoritos');
+        .then((userCredential) => {
+          // Actualiza el nombre de usuario en Firebase Authentication
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name, // Guarda el nombre del usuario
+          }).then(() => {
+            navigation.navigate('Favoritos');
+          }).catch((error) => {
+            Alert.alert("Error", error.message);
+          });
         })
         .catch((error) => {
           Alert.alert("Error", error.message);

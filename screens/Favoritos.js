@@ -102,6 +102,7 @@ export default function Favoritos({ navigation }) {
               key={video.id}
               videoUrl={video.enlace} 
               initialTitle={video.titulo} 
+              fechaCreacion={video.fechaCreacion} 
               isWatched={video.visto} 
               onToggleWatched={() => toggleWatchedInFirestore(video.id, video.visto)} 
             />
@@ -110,11 +111,17 @@ export default function Favoritos({ navigation }) {
               key={video.id}
               videoUrl={video.enlace} 
               initialTitle={video.titulo} 
+              fechaCreacion={video.fechaCreacion} 
               isWatched={video.visto} 
               onToggleWatched={() => toggleWatchedInFirestore(video.id, video.visto)} 
             />
           )
         ))}
+
+        {/* Celda de "No hay más videos" al final */}
+        <View style={styles.noMoreVideosCell}>
+          <Text style={styles.noMoreVideosText}>No hay más videos</Text>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -179,4 +186,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#00910E',
   },
   loaderText: { color: 'white', fontSize: 16, marginTop: 10 },
+  // Estilos para la celda "No hay más videos"
+  noMoreVideosCell: {
+    backgroundColor: 'white',
+    padding: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noMoreVideosText: {
+    fontSize: 16,
+    color: '#666',
+    fontStyle: 'italic',
+  },
 });
