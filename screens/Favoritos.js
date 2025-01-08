@@ -77,7 +77,7 @@ export default function Favoritos({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#ffffff" /> {/* Indicador de carga */}
+        <ActivityIndicator size="large" color="#ffffff" /> 
         <Text style={styles.loaderText}>Cargando favoritos...</Text>
       </View>
     );
@@ -90,7 +90,6 @@ export default function Favoritos({ navigation }) {
       </View>
 
       <View style={styles.filterButtons}>
-        {/* Botones de filtro para los videos */}
         <TouchableOpacity onPress={() => setFilter("vistos")} style={styles.filterButton}>
           <Text style={styles.filterButtonText}>Vistos</Text>
         </TouchableOpacity>
@@ -103,7 +102,6 @@ export default function Favoritos({ navigation }) {
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {/* Muestra las celdas de los videos filtrados */}
         {filteredVideos.map((video) => (
           video.tipo === 'YouTube' ? (
             <YouTubeCell
@@ -126,7 +124,6 @@ export default function Favoritos({ navigation }) {
           )
         ))}
 
-        {/* Celda de "No hay más videos" al final */}
         <View style={styles.noMoreVideosCell}>
           <Text style={styles.noMoreVideosText}>No hay videos</Text>
         </View>
@@ -136,13 +133,12 @@ export default function Favoritos({ navigation }) {
         <FSection currentSection={1} onPress={handlePress} />
       </View>
 
-      {/* Popup de logout */}
       <LogoutPopup
         visible={isPopupVisible}
         onClose={() => setPopupVisible(false)}
         onConfirm={() => {
           setPopupVisible(false);
-          navigation.navigate('Login'); // Redirige a login al confirmar
+          navigation.navigate('Login'); 
         }}
         navigation={navigation}
       />
